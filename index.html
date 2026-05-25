@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI生图工单Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        .header {
+            background: #fff;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header h1 {
+            font-size: 20px;
+            color: #1890ff;
+        }
+        .nav {
+            display: flex;
+            gap: 8px;
+        }
+        .nav button {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: #666;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .nav button.active {
+            background: #1890ff;
+            color: #fff;
+        }
+        .container {
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+        .card h2 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .upload-area {
+            border: 2px dashed #d9d9d9;
+            border-radius: 8px;
+            padding: 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #1890ff;
+            background: #e6f7ff;
+        }
+        .upload-area input {
+            display: none;
+        }
+        .upload-area .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #666;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #1890ff;
+            color: #fff;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background: #40a9ff;
+        }
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .status-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .status-pending { background: #e6f7ff; color: #1890ff; }
+        .status-parsing { background: #e6fffb; color: #13c2c2; }
+        .status-processing { background: #fff7e6; color: #fa8c16; }
+        .status-generating { background: #f9f0ff; color: #722ed1; }
+        .status-completed { background: #f6ffed; color: #52c41a; }
+        .status-failed { background: #fff2f0; color: #f5222d; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        table th {
+            background: #fafafa;
+            font-weight: 500;
+            color: #666;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .progress-bar .progress {
+            height: 100%;
+            background: #1890ff;
+            transition: width 0.3s;
+        }
+        .alert {
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        .alert-success {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #fafafa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1890ff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: #999;
+        }
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 AI生图工单Agent</h1>
+        <div class="nav">
+            <button class="active" onclick="showTab('upload', this)">上传工单</button>
+            <button onclick="showTab('orders', this)">工单列表</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 上传工单 -->
+        <div id="upload-tab" class="card">
+            <h2>上传工单</h2>
+            <div class="form-group">
+                <label>Excel文件</label>
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div class="icon">📁</div>
+                    <p>点击或拖拽Excel文件到此区域</p>
+                    <p style="color: #999; font-size: 12px; margin-top: 8px;">支持.xlsx和.xls格式</p>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFiles()">
+                </div>
+            </div>
+            
+            <div id="fileList" class="file-list" style="display: none;"></div>
+            
+            <button class="btn btn-primary" onclick="createOrder()" id="submitBtn">创建工单</button>
+            
+            <div style="margin-top: 24px; padding: 16px; background: #fafafa; border-radius: 4px;">
+                <h3 style="font-size: 14px; margin-bottom: 8px;">Excel格式要求</h3>
+                <ul style="font-size: 13px; color: #666; padding-left: 20px;">
+                    <li><strong>生图要求</strong> - 产品修改描述</li>
+                    <li><strong>文案要求</strong> - 文案修改内容</li>
+                    <li><strong>参考图URL</strong> - 参考图片链接</li>
+                    <li><strong>产品图URL</strong> - 产品图片链接</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 工单列表 -->
+        <div id="orders-tab" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="font-size: 16px;">工单列表</h2>
+                <button class="btn btn-secondary btn-sm" onclick="loadOrders()">
+                    🔄 刷新
+                </button>
+            </div>
+            
+            <div id="ordersContainer"></div>
+            
+            <!-- 工单详情 -->
+            <div id="orderDetail" style="display: none;">
+                <button class="btn btn-secondary btn-sm" onclick="hideDetail()">← 返回</button>
+                <div id="detailContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ 后端API地址配置 ============
+        // 部署到帽子云后，修改这里为真实的火山引擎Web函数地址！
+        // 例如：https://你的域名.apigateway-cn-guangzhou.volceapi.com/api/v1
+        const API_BASE = '/api/v1';
+        // ==========================================
+        let selectedFiles = [];
+        
+        function showTab(tab, btn) {
+            document.querySelectorAll('.nav button').forEach(btn => btn.classList.remove('active'));
+            if (btn) {
+                btn.classList.add('active');
+            } else if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            document.getElementById('upload-tab').style.display = tab === 'upload' ? 'block' : 'none';
+            document.getElementById('orders-tab').style.display = tab === 'orders' ? 'block' : 'none';
+            
+            if (tab === 'orders') {
+                loadOrders();
+            }
+        }
+        
+        function handleFiles() {
+            const input = document.getElementById('fileInput');
+            selectedFiles = Array.from(input.files);
+            updateFileList();
+        }
+        
+        function updateFileList() {
+            const container = document.getElementById('fileList');
+            if (selectedFiles.length > 0) {
+                container.style.display = 'block';
+                container.innerHTML = selectedFiles.map((file, i) => 
+                    `<div class="file-item">
+                        <span>${i+1}. ${file.name}</span>
+                        <button class="btn btn-secondary btn-sm" onclick="removeFile(${i})">删除</button>
+                    </div>`
+                ).join('');
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+        
+        async function createOrder() {
+            if (selectedFiles.length === 0) {
+                alert('请先上传Excel文件');
+                return;
+            }
+            
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = '<span class="spinner"></span> 提交中...';
+            btn.disabled = true;
+            
+            try {
+                const formData = new FormData();
+                selectedFiles.forEach(file => formData.append('files', file));
+                
+                const response = await fetch(`${API_BASE}/orders`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    result = { detail: '服务器返回无效响应' };
+                }
+                
+                if (response.ok) {
+                    alert(`工单创建成功！\n工单ID: ${result.order_id}`);
+                    selectedFiles = [];
+                    document.getElementById('fileInput').value = '';
+                    updateFileList();
+                    showTab('orders');
+                } else {
+                    alert('创建失败: ' + (result.detail || '未知错误'));
+                }
+            } catch (error) {
+                alert('创建失败: ' + error.message);
+            } finally {
+                btn.innerHTML = '创建工单';
+                btn.disabled = false;
+            }
+        }
+        
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_BASE}/orders`);
+                const result = await response.json();
+                
+                const container = document.getElementById('ordersContainer');
+                
+                if (!result.orders || result.orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📭</div>
+                            <p>暂无工单</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>工单ID</th>
+                                <th>工单名称</th>
+                                <th>状态</th>
+                                <th>进度</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${result.orders.map(order => `
+                                <tr>
+                                    <td>${order.order_id}</td>
+                                    <td>${order.order_name}</td>
+                                    <td><span class="status-tag status-${order.status}">${getStatusText(order.status)}</span></td>
+                                    <td>${order.current_task || 0} / ${order.total_tasks || 0}</td>
+                                    <td>${order.created_at}</td>
+                                    <td><button class="btn btn-primary btn-sm" onclick="loadOrderDetail('${order.order_id}')">查看详情</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                alert('加载失败: ' + error.message);
+            }
+        }
+        
+        function getStatusText(status) {
+            const map = {
+                pending: '等待中',
+                parsing: '解析中',
+                processing: '处理中',
+                generating: '生成中',
+                completed: '已完成',
+                failed: '失败'
+            };
+            return map[status] || status;
+        }
+        
+        async function loadOrderDetail(orderId) {
+            try {
+                const response = await fetch(`${API_BASE}/orders/${orderId}`);
+                const result = await response.json();
+                
+                if (!result.success) {
+                    alert('加载失败');
+                    return;
+                }
+                
+                const order = result.order;
+                
+                document.getElementById('ordersContainer').style.display = 'none';
+                document.getElementById('orderDetail').style.display = 'block';
+                
+                const progressPercent = order.total_tasks > 0 ? Math.round((order.current_task / order.total_tasks) * 100) : 0;
+                
+                let downloadSection = '';
+                if (order.zip_url) {
+                    downloadSection = `
+                        <div class="alert alert-success">
+                            <strong>🎉 下载可用</strong>
+                            <p style="margin-top: 8px;">
+                                <button class="btn btn-primary" onclick="window.open('${order.zip_url}', '_blank')">
+                                    📥 下载ZIP文件
+                                </button>
+                            </p>
+                        </div>
+                    `;
+                }
+                
+                let tasksSection = '';
+                const tasks = Array.isArray(order.tasks) ? order.tasks : [];
+                if (tasks.length > 0) {
+                    tasksSection = `
+                        <div class="card">
+                            <h2>任务列表</h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>行号</th>
+                                        <th>状态</th>
+                                        <th>文案要求</th>
+                                        <th>生图URL</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tasks.map(task => `
+                                        <tr>
+                                            <td>${task.row_index || '-'}</td>
+                                            <td><span class="status-tag status-${task.status}">${getStatusText(task.status)}</span></td>
+                                            <td style="max-width: 300px;">${task.text_modification || '-'}</td>
+                                            <td style="max-width: 200px;">${task.generated_url ? `<a href="${task.generated_url}" target="_blank">查看</a>` : '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('detailContent').innerHTML = `
+                    <div class="card">
+                        <h2>工单详情</h2>
+                        <div style="margin-bottom: 16px;">
+                            <p><strong>工单ID：</strong>${order.order_id}</p>
+                            <p><strong>工单名称：</strong>${order.order_name}</p>
+                            <p><strong>状态：</strong><span class="status-tag status-${order.status}">${getStatusText(order.status)}</span></p>
+                            <p><strong>创建时间：</strong>${order.created_at}</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <p><strong>进度：</strong>${order.current_task || 0} / ${order.total_tasks || 0}</p>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${progressPercent}%"></div>
+                            </div>
+                        </div>
+                        
+                        ${downloadSection}
+                    </div>
+                    
+                    ${tasksSection}
+                `;
+                
+                // 如果任务未完成，定时刷新
+                if (order.status !== 'completed' && order.status !== 'failed') {
+                    setTimeout(() => loadOrderDetail(orderId), 2000);
+                }
+            } catch (error) {
+                alert('加载详情失败: ' + error.message);
+            }
+        }
+        
+        function hideDetail() {
+            document.getElementById('ordersContainer').style.display = 'block';
+            document.getElementById('orderDetail').style.display = 'none';
+        }
+        
+        // 拖拽上传
+        const uploadArea = document.getElementById('uploadArea');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = Array.from(e.dataTransfer.files).filter(f => 
+                f.name.endsWith('.xlsx') || f.name.endsWith('.xls')
+            );
+            
+            if (files.length > 0) {
+                selectedFiles = [...selectedFiles, ...files];
+                updateFileList();
+            }
+        });
+    </script>
+</body>
+</html>
