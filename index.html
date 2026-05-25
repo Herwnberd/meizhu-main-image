@@ -3,268 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI生图工单Agent</title>
+    <title>AI生图工单系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            min-height: 100vh;
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        .header {
-            background: #fff;
-            padding: 16px 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .header h1 {
-            font-size: 20px;
-            color: #1890ff;
-        }
-        .nav {
-            display: flex;
-            gap: 8px;
-        }
-        .nav button {
-            padding: 8px 16px;
-            border: none;
-            background: transparent;
-            color: #666;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-        .nav button.active {
-            background: #1890ff;
-            color: #fff;
-        }
-        .container {
-            padding: 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 16px;
-        }
-        .card h2 {
-            font-size: 16px;
-            margin-bottom: 16px;
-            color: #333;
-        }
-        .upload-area {
-            border: 2px dashed #d9d9d9;
-            border-radius: 8px;
-            padding: 48px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .upload-area:hover, .upload-area.dragover {
-            border-color: #1890ff;
-            background: #e6f7ff;
-        }
-        .upload-area input {
-            display: none;
-        }
-        .upload-area .icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-        .form-group {
-            margin-bottom: 16px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #666;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d9d9d9;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        .btn-primary {
-            background: #1890ff;
-            color: #fff;
-            width: 100%;
-        }
-        .btn-primary:hover {
-            background: #40a9ff;
-        }
-        .btn-secondary {
-            background: #f5f5f5;
-            color: #666;
-        }
-        .btn-secondary:hover {
-            background: #e8e8e8;
-        }
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        .status-tag {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        .status-pending { background: #e6f7ff; color: #1890ff; }
-        .status-parsing { background: #e6fffb; color: #13c2c2; }
-        .status-processing { background: #fff7e6; color: #fa8c16; }
-        .status-generating { background: #f9f0ff; color: #722ed1; }
-        .status-completed { background: #f6ffed; color: #52c41a; }
-        .status-failed { background: #fff2f0; color: #f5222d; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
-        table th, table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        table th {
-            background: #fafafa;
-            font-weight: 500;
-            color: #666;
-        }
+        .status-pending { color: #f59e0b; }
+        .status-processing { color: #3b82f6; }
+        .status-completed { color: #10b981; }
+        .status-failed { color: #ef4444; }
         .progress-bar {
             height: 8px;
-            background: #f0f0f0;
+            background: #e5e7eb;
             border-radius: 4px;
             overflow: hidden;
-            margin: 8px 0;
         }
-        .progress-bar .progress {
+        .progress-fill {
             height: 100%;
-            background: #1890ff;
-            transition: width 0.3s;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
         }
-        .alert {
-            padding: 16px;
-            border-radius: 4px;
-            margin-bottom: 16px;
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
         }
-        .alert-success {
-            background: #f6ffed;
-            border: 1px solid #b7eb8f;
-            color: #52c41a;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .file-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin-bottom: 16px;
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
         }
-        .file-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: #fafafa;
-            border-radius: 4px;
-            margin-bottom: 8px;
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #1890ff;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .empty-state {
-            text-align: center;
-            padding: 48px;
-            color: #999;
-        }
-        .empty-state .icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-        }
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h1>🤖 AI生图工单Agent</h1>
-        <div class="nav">
-            <button class="active" onclick="showTab('upload', this)">上传工单</button>
-            <button onclick="showTab('orders', this)">工单列表</button>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold gradient-text bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500 mb-2">AI生图工单系统</h1>
+            <p class="text-gray-600">上传Excel工单，自动处理图片生成任务</p>
         </div>
-    </div>
-    
-    <div class="container">
-        <!-- 上传工单 -->
-        <div id="upload-tab" class="card">
-            <h2>上传工单</h2>
-            <div class="form-group">
-                <label>Excel文件</label>
-                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                    <div class="icon">📁</div>
-                    <p>点击或拖拽Excel文件到此区域</p>
-                    <p style="color: #999; font-size: 12px; margin-top: 8px;">支持.xlsx和.xls格式</p>
-                    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFiles()">
+
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover transition-all duration-300">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    创建工单
+                </h2>
+                <div id="uploadForm" class="space-y-4">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-500 transition-colors cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls" multiple onchange="handleFileSelect(event)">
+                        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <p class="text-gray-600 mb-2">点击或拖拽文件到此处</p>
+                        <p class="text-sm text-gray-400">支持 .xlsx, .xls 格式</p>
+                    </div>
+                    <div id="fileList" class="space-y-2"></div>
+                    <button id="submitBtn" class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" onclick="submitOrder()" disabled>
+                        提交工单
+                    </button>
                 </div>
             </div>
-            
-            <div id="fileList" class="file-list" style="display: none;"></div>
-            
-            <button class="btn btn-primary" onclick="createOrder()" id="submitBtn">创建工单</button>
-            
-            <div style="margin-top: 24px; padding: 16px; background: #fafafa; border-radius: 4px;">
-                <h3 style="font-size: 14px; margin-bottom: 8px;">Excel格式要求</h3>
-                <ul style="font-size: 13px; color: #666; padding-left: 20px;">
-                    <li><strong>生图要求</strong> - 产品修改描述</li>
-                    <li><strong>文案要求</strong> - 文案修改内容</li>
-                    <li><strong>参考图URL</strong> - 参考图片链接</li>
-                    <li><strong>产品图URL</strong> - 产品图片链接</li>
-                </ul>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover transition-all duration-300">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    工单列表
+                </h2>
+                <div id="orderList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <p class="text-gray-400 text-center py-8">暂无工单</p>
+                </div>
             </div>
         </div>
-        
-        <!-- 工单列表 -->
-        <div id="orders-tab" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 style="font-size: 16px;">工单列表</h2>
-                <button class="btn btn-secondary btn-sm" onclick="loadOrders()">
-                    🔄 刷新
-                </button>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    下载记录
+                </h2>
+                <button onclick="loadZipList()" class="text-purple-600 hover:text-purple-700 text-sm">刷新</button>
             </div>
-            
-            <div id="ordersContainer"></div>
-            
-            <!-- 工单详情 -->
-            <div id="orderDetail" style="display: none;">
-                <button class="btn btn-secondary btn-sm" onclick="hideDetail()">← 返回</button>
-                <div id="detailContent"></div>
+            <div id="zipList" class="space-y-3">
+                <p class="text-gray-400 text-center py-4">暂无下载记录</p>
             </div>
         </div>
     </div>
@@ -272,46 +117,55 @@
     <script>
         // ============ 后端API地址配置 ============
         // 部署到帽子云后，修改这里为真实的火山引擎Web函数地址！
-        // 例如：https://你的域名.apigateway-cn-guangzhou.volceapi.com/api/v1
-        const API_BASE = '/api/v1';
+        // 例如：https://你 的域名.apigateway-cn-guangzhou.volceapi.com/api/v1
+        const API_BASE = 'https://sd89rlr7al3l0dlonbq20.apigateway-cn-guangzhou.volceapi.com/api/v1';
         // ==========================================
         let selectedFiles = [];
         
         function showTab(tab, btn) {
-            document.querySelectorAll('.nav button').forEach(btn => btn.classList.remove('active'));
-            if (btn) {
-                btn.classList.add('active');
-            } else if (event && event.target) {
-                event.target.classList.add('active');
-            }
-            
-            document.getElementById('upload-tab').style.display = tab === 'upload' ? 'block' : 'none';
-            document.getElementById('orders-tab').style.display = tab === 'orders' ? 'block' : 'none';
-            
-            if (tab === 'orders') {
-                loadOrders();
-            }
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-purple-600', 'text-white'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            btn.classList.add('bg-purple-600', 'text-white');
+            document.getElementById(tab).classList.remove('hidden');
         }
         
-        function handleFiles() {
-            const input = document.getElementById('fileInput');
-            selectedFiles = Array.from(input.files);
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                if (!selectedFiles.find(f => f.name === file.name)) {
+                    selectedFiles.push(file);
+                }
+            });
             updateFileList();
         }
         
         function updateFileList() {
-            const container = document.getElementById('fileList');
-            if (selectedFiles.length > 0) {
-                container.style.display = 'block';
-                container.innerHTML = selectedFiles.map((file, i) => 
-                    `<div class="file-item">
-                        <span>${i+1}. ${file.name}</span>
-                        <button class="btn btn-secondary btn-sm" onclick="removeFile(${i})">删除</button>
-                    </div>`
-                ).join('');
-            } else {
-                container.style.display = 'none';
+            const fileList = document.getElementById('fileList');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '';
+                submitBtn.disabled = true;
+                return;
             }
+            
+            fileList.innerHTML = selectedFiles.map((file, index) => `
+                <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-sm">${file.name}</span>
+                    </div>
+                    <button onclick="removeFile(${index})" class="text-red-500 hover:text-red-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+            
+            submitBtn.disabled = selectedFiles.length === 0;
         }
         
         function removeFile(index) {
@@ -319,230 +173,173 @@
             updateFileList();
         }
         
-        async function createOrder() {
-            if (selectedFiles.length === 0) {
-                alert('请先上传Excel文件');
-                return;
-            }
+        async function submitOrder() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '提交中...';
             
-            const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<span class="spinner"></span> 提交中...';
-            btn.disabled = true;
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
             
             try {
-                const formData = new FormData();
-                selectedFiles.forEach(file => formData.append('files', file));
-                
                 const response = await fetch(`${API_BASE}/orders`, {
                     method: 'POST',
                     body: formData
                 });
                 
-                let result;
-                try {
-                    result = await response.json();
-                } catch (e) {
-                    result = { detail: '服务器返回无效响应' };
-                }
+                const data = await response.json();
                 
-                if (response.ok) {
-                    alert(`工单创建成功！\n工单ID: ${result.order_id}`);
+                if (data.success) {
+                    showToast('工单创建成功！', 'success');
                     selectedFiles = [];
-                    document.getElementById('fileInput').value = '';
                     updateFileList();
-                    showTab('orders');
+                    loadOrders();
                 } else {
-                    alert('创建失败: ' + (result.detail || '未知错误'));
+                    showToast(data.detail || '创建失败', 'error');
                 }
             } catch (error) {
-                alert('创建失败: ' + error.message);
+                showToast('网络错误：' + error.message, 'error');
             } finally {
-                btn.innerHTML = '创建工单';
-                btn.disabled = false;
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '提交工单';
             }
         }
         
         async function loadOrders() {
             try {
                 const response = await fetch(`${API_BASE}/orders`);
-                const result = await response.json();
+                const data = await response.json();
                 
-                const container = document.getElementById('ordersContainer');
+                const orderList = document.getElementById('orderList');
                 
-                if (!result.orders || result.orders.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="icon">📭</div>
-                            <p>暂无工单</p>
-                        </div>
-                    `;
+                if (!data.orders || data.orders.length === 0) {
+                    orderList.innerHTML = '<p class="text-gray-400 text-center py-8">暂无工单</p>';
                     return;
                 }
                 
-                container.innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>工单ID</th>
-                                <th>工单名称</th>
-                                <th>状态</th>
-                                <th>进度</th>
-                                <th>创建时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${result.orders.map(order => `
-                                <tr>
-                                    <td>${order.order_id}</td>
-                                    <td>${order.order_name}</td>
-                                    <td><span class="status-tag status-${order.status}">${getStatusText(order.status)}</span></td>
-                                    <td>${order.current_task || 0} / ${order.total_tasks || 0}</td>
-                                    <td>${order.created_at}</td>
-                                    <td><button class="btn btn-primary btn-sm" onclick="loadOrderDetail('${order.order_id}')">查看详情</button></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } catch (error) {
-                alert('加载失败: ' + error.message);
-            }
-        }
-        
-        function getStatusText(status) {
-            const map = {
-                pending: '等待中',
-                parsing: '解析中',
-                processing: '处理中',
-                generating: '生成中',
-                completed: '已完成',
-                failed: '失败'
-            };
-            return map[status] || status;
-        }
-        
-        async function loadOrderDetail(orderId) {
-            try {
-                const response = await fetch(`${API_BASE}/orders/${orderId}`);
-                const result = await response.json();
-                
-                if (!result.success) {
-                    alert('加载失败');
-                    return;
-                }
-                
-                const order = result.order;
-                
-                document.getElementById('ordersContainer').style.display = 'none';
-                document.getElementById('orderDetail').style.display = 'block';
-                
-                const progressPercent = order.total_tasks > 0 ? Math.round((order.current_task / order.total_tasks) * 100) : 0;
-                
-                let downloadSection = '';
-                if (order.zip_url) {
-                    downloadSection = `
-                        <div class="alert alert-success">
-                            <strong>🎉 下载可用</strong>
-                            <p style="margin-top: 8px;">
-                                <button class="btn btn-primary" onclick="window.open('${order.zip_url}', '_blank')">
-                                    📥 下载ZIP文件
-                                </button>
-                            </p>
-                        </div>
-                    `;
-                }
-                
-                let tasksSection = '';
-                const tasks = Array.isArray(order.tasks) ? order.tasks : [];
-                if (tasks.length > 0) {
-                    tasksSection = `
-                        <div class="card">
-                            <h2>任务列表</h2>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>行号</th>
-                                        <th>状态</th>
-                                        <th>文案要求</th>
-                                        <th>生图URL</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tasks.map(task => `
-                                        <tr>
-                                            <td>${task.row_index || '-'}</td>
-                                            <td><span class="status-tag status-${task.status}">${getStatusText(task.status)}</span></td>
-                                            <td style="max-width: 300px;">${task.text_modification || '-'}</td>
-                                            <td style="max-width: 200px;">${task.generated_url ? `<a href="${task.generated_url}" target="_blank">查看</a>` : '-'}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                }
-                
-                document.getElementById('detailContent').innerHTML = `
-                    <div class="card">
-                        <h2>工单详情</h2>
-                        <div style="margin-bottom: 16px;">
-                            <p><strong>工单ID：</strong>${order.order_id}</p>
-                            <p><strong>工单名称：</strong>${order.order_name}</p>
-                            <p><strong>状态：</strong><span class="status-tag status-${order.status}">${getStatusText(order.status)}</span></p>
-                            <p><strong>创建时间：</strong>${order.created_at}</p>
-                        </div>
-                        
-                        <div style="margin-bottom: 16px;">
-                            <p><strong>进度：</strong>${order.current_task || 0} / ${order.total_tasks || 0}</p>
-                            <div class="progress-bar">
-                                <div class="progress" style="width: ${progressPercent}%"></div>
-                            </div>
-                        </div>
-                        
-                        ${downloadSection}
-                    </div>
+                orderList.innerHTML = data.orders.map(order => {
+                    const statusClass = `status-${order.status}`;
+                    const statusText = {pending: '等待中', processing: '处理中', completed: '已完成', failed: '失败'}[order.status] || order.status;
+                    const progress = order.total_tasks > 0 ? (order.current_task / order.total_tasks * 100) : 0;
                     
-                    ${tasksSection}
-                `;
+                    return `
+                        <div class="bg-gray-50 p-4 rounded-lg fade-in">
+                            <div class="flex items-center justify-between mb-2">
+                                <div>
+                                    <h3 class="font-medium">${order.order_name}</h3>
+                                    <p class="text-xs text-gray-400">ID: ${order.order_id}</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="${statusClass} text-sm font-medium">${statusText}</span>
+                                    <button onclick="deleteOrder('${order.order_id}')" class="text-red-500 hover:text-red-700 p-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            ${order.status === 'processing' ? `
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${progress}%"></div>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">${order.current_task} / ${order.total_tasks}</p>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
                 
-                // 如果任务未完成，定时刷新
-                if (order.status !== 'completed' && order.status !== 'failed') {
-                    setTimeout(() => loadOrderDetail(orderId), 2000);
+                setTimeout(loadOrders, 3000);
+            } catch (error) {
+                console.error('加载工单失败:', error);
+            }
+        }
+        
+        async function loadZipList() {
+            try {
+                const response = await fetch(`${API_BASE}/zips`);
+                const data = await response.json();
+                
+                const zipList = document.getElementById('zipList');
+                
+                if (!data.zips || data.zips.length === 0) {
+                    zipList.innerHTML = '<p class="text-gray-400 text-center py-4">暂无下载记录</p>';
+                    return;
+                }
+                
+                zipList.innerHTML = data.zips.map(zip => `
+                    <div class="bg-gray-50 p-4 rounded-lg flex items-center justify-between">
+                        <div>
+                            <h3 class="font-medium">${zip.order_name}</h3>
+                            <p class="text-xs text-gray-400">ID: ${zip.order_id}</p>
+                        </div>
+                        <a href="${zip.zip_url}" download class="gradient-bg text-white px-4 py-2 rounded-lg text-sm hover:opacity-90">
+                            下载ZIP
+                        </a>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载下载记录失败:', error);
+            }
+        }
+        
+        async function deleteOrder(orderId) {
+            if (!confirm('确定要删除这个工单吗？')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/orders/${orderId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('工单已删除', 'success');
+                    loadOrders();
+                } else {
+                    showToast(data.detail || '删除失败', 'error');
                 }
             } catch (error) {
-                alert('加载详情失败: ' + error.message);
+                showToast('网络错误：' + error.message, 'error');
             }
         }
         
-        function hideDetail() {
-            document.getElementById('ordersContainer').style.display = 'block';
-            document.getElementById('orderDetail').style.display = 'none';
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
         }
         
-        // 拖拽上传
-        const uploadArea = document.getElementById('uploadArea');
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
+        document.addEventListener('DOMContentLoaded', () => {
+            loadOrders();
+            loadZipList();
         });
         
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
+        const uploadForm = document.getElementById('uploadForm');
+        uploadForm.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            
-            const files = Array.from(e.dataTransfer.files).filter(f => 
-                f.name.endsWith('.xlsx') || f.name.endsWith('.xls')
-            );
-            
-            if (files.length > 0) {
-                selectedFiles = [...selectedFiles, ...files];
-                updateFileList();
-            }
+            uploadForm.querySelector('.border-dashed').classList.add('border-purple-500', 'bg-purple-50');
+        });
+        uploadForm.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadForm.querySelector('.border-dashed').classList.remove('border-purple-500', 'bg-purple-50');
+        });
+        uploadForm.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadForm.querySelector('.border-dashed').classList.remove('border-purple-500', 'bg-purple-50');
+            const files = Array.from(e.dataTransfer.files);
+            files.forEach(file => {
+                if (!selectedFiles.find(f => f.name === file.name)) {
+                    selectedFiles.push(file);
+                }
+            });
+            updateFileList();
         });
     </script>
 </body>
