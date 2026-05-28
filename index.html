@@ -251,11 +251,23 @@
 
         async function loadTasks(page = 1) {
             try {
+                console.log(`[DEBUG] 加载任务列表: ${API_BASE}/tasks?page=${page}&page_size=10`);
                 const response = await fetch(`${API_BASE}/tasks?page=${page}&page_size=10`);
-                const result = await response.json();
+                console.log(`[DEBUG] loadTasks 响应状态: ${response.status}`);
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error(`[ERROR] loadTasks HTTP错误: ${response.status} - ${text}`);
+                    return;
+                }
+                
+                const textResponse = await response.text();
+                console.log(`[DEBUG] loadTasks 响应内容:`, textResponse);
+                
+                const result = JSON.parse(textResponse);
                 renderTaskList(result.tasks, result.total, result.page, result.has_more);
             } catch (error) {
-                console.error('加载任务失败:', error);
+                console.error('[ERROR] 加载任务失败:', error);
             }
         }
 
@@ -377,11 +389,23 @@
 
         async function loadZips(page = 1) {
             try {
+                console.log(`[DEBUG] 加载ZIP列表: ${API_BASE}/zips?page=${page}&page_size=10`);
                 const response = await fetch(`${API_BASE}/zips?page=${page}&page_size=10`);
-                const result = await response.json();
+                console.log(`[DEBUG] loadZips 响应状态: ${response.status}`);
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error(`[ERROR] loadZips HTTP错误: ${response.status} - ${text}`);
+                    return;
+                }
+                
+                const textResponse = await response.text();
+                console.log(`[DEBUG] loadZips 响应内容:`, textResponse);
+                
+                const result = JSON.parse(textResponse);
                 renderZipList(result.zips, result.total, result.page, result.has_more);
             } catch (error) {
-                console.error('加载ZIP列表失败:', error);
+                console.error('[ERROR] 加载ZIP列表失败:', error);
             }
         }
 
