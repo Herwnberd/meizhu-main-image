@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="api-base" content="https://sd89rlr7al3l0dlonbq20.apigateway-cn-guangzhou.volceapi.com/api">
+    <meta name="api-base" content="http://localhost:5000/api">
     <title>批量生图系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -29,12 +29,14 @@
     </style>
     <script>
         function getApiBase() {
-            var apiBase = window.location.origin + '/api';
             var meta = document.querySelector('meta[name="api-base"]');
             if (meta) {
-                apiBase = meta.getAttribute('content');
+                return meta.getAttribute('content');
             }
-            return apiBase;
+            if (window.location.origin && window.location.origin !== 'null') {
+                return window.location.origin + '/api';
+            }
+            return 'http://localhost:5000/api';
         }
     </script>
 </head>
@@ -196,12 +198,6 @@
                 return;
             }
 
-            const formData = new FormData();
-            validFiles.forEach(f => {
-                formData.append('files', f);
-                console.log(`[DEBUG] 添加文件: ${f.name}, 大小: ${(f.size / 1024).toFixed(2)} KB`);
-            });
-
             const progressDiv = document.getElementById('uploadProgress');
             const progressBar = document.getElementById('uploadBar');
             const progressPercent = document.getElementById('uploadPercent');
@@ -211,8 +207,13 @@
             progressPercent.textContent = '0%';
 
             try {
+                const formData = new FormData();
+                validFiles.forEach(f => {
+                    formData.append('files', f);
+                    console.log(`[DEBUG] 添加文件: ${f.name}, 大小: ${(f.size / 1024).toFixed(2)} KB`);
+                });
+
                 console.log(`[DEBUG] 开始上传到: ${API_BASE}/upload`);
-                console.log(`[DEBUG] FormData条目数: ${formData.getAll('files').length}`);
                 
                 const response = await fetch(`${API_BASE}/upload`, {
                     method: 'POST',
@@ -220,32 +221,27 @@
                 });
 
                 console.log(`[DEBUG] 响应状态码: ${response.status}`);
-                console.log(`[DEBUG] 响应头:`, response.headers);
-                
                 const textResponse = await response.text();
                 console.log(`[DEBUG] 响应内容:`, textResponse);
                 
-                try {
-                    const result = JSON.parse(textResponse);
-                    if (result.success) {
-                        progressBar.style.width = '100%';
-                        progressPercent.textContent = '100%';
-                        setTimeout(() => {
-                            progressDiv.classList.add('hidden');
-                            taskPage = 1;
-                            loadTasks();
-                        }, 500);
-                    } else {
-                        alert('上传失败: ' + result.error);
-                    }
-                } catch (jsonError) {
-                    console.error('[ERROR] JSON解析失败:', jsonError);
-                    console.error('[ERROR] 原始响应:', textResponse);
-                    alert(`上传失败: 响应格式错误 - ${response.status}`);
+                const result = JSON.parse(textResponse);
+                if (result.success) {
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                } else {
+                    throw new Error('上传失败: ' + result.error);
                 }
+                
+                setTimeout(() => {
+                    progressDiv.classList.add('hidden');
+                    taskPage = 1;
+                    loadTasks();
+                }, 500);
+                
             } catch (error) {
-                console.error('[ERROR] 网络请求失败:', error);
+                console.error('[ERROR] 上传失败:', error);
                 alert('上传失败: ' + error.message);
+                progressDiv.classList.add('hidden');
             }
         }
 
