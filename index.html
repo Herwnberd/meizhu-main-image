@@ -340,10 +340,24 @@
                                         class="mr-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">
                                     <i class="fa fa-eye mr-1"></i>详情
                                 </button>
-                                <button onclick="deleteTask('${task.task_id}')"
-                                        class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600">
-                                    <i class="fa fa-trash mr-1"></i>删除
-                                </button>
+                                ${task.status === 'processing' ? `
+                                    <button disabled 
+                                            class="px-3 py-1 text-sm bg-gray-400 text-gray-200 rounded cursor-not-allowed">
+                                        <i class="fa fa-trash mr-1"></i>删除
+                                    </button>
+                                ` : `
+                                    ${task.status === 'processing' ? `
+    <button disabled 
+            class="px-3 py-1 text-sm bg-gray-400 text-gray-200 rounded cursor-not-allowed">
+        <i class="fa fa-trash mr-1"></i>删除
+    </button>
+` : `
+    <button onclick="deleteTask('${task.task_id}')"
+            class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600">
+        <i class="fa fa-trash mr-1"></i>删除
+    </button>
+`}
+                                `}
                             </div>
                         </div>
                         ${task.status === 'processing' ? `
