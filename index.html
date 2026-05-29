@@ -461,10 +461,16 @@
                                 <p class="text-sm text-gray-400">7天内有效 | 创建于 ${zip.create_time}</p>
                             </div>
                         </div>
-                        <a href="${zip.zip_url}" target="_blank" 
-                           class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
-                            <i class="fa fa-download mr-1"></i>下载
-                        </a>
+                        <div class="flex items-center">
+                            <a href="${zip.zip_url}" target="_blank" 
+                               class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 mr-2">
+                                <i class="fa fa-download mr-1"></i>下载
+                            </a>
+                            <button onclick="deleteZip('${zip.task_id}')"
+                                    class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                <i class="fa fa-trash mr-1"></i>删除
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -572,6 +578,25 @@
 
         async function deleteTask(taskId) {
             if (!confirm('确定要删除这个工单吗？')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/task/${taskId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    taskPage = 1;
+                    zipPage = 1;
+                    loadTasks();
+                    loadZips();
+                }
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+
+        async function deleteZip(taskId) {
+            if (!confirm('确定要删除这个ZIP文件吗？')) return;
             
             try {
                 const response = await fetch(`${API_BASE}/task/${taskId}`, {
