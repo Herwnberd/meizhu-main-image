@@ -107,7 +107,24 @@
                     <h2 class="text-lg font-semibold text-gray-700 flex items-center">
                         <i class="fa fa-file-archive-o mr-2 text-purple-500"></i>成品ZIP下载
                     </h2>
-                    <span class="text-sm text-gray-500">共 <span id="zipTotal">0</span> 条记录</span>
+                    <div class="flex items-center gap-4">
+                        <button onclick="loadTosFiles()" 
+                                class="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600">
+                            <i class="fa fa-cloud mr-1"></i>查询TOS文件
+                        </button>
+                        <div class="flex items-center gap-2 text-sm">
+                            <span class="text-gray-500">排序:</span>
+                            <button onclick="sortTosFiles('name')" id="sortNameBtn"
+                                    class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">
+                                <i class="fa fa-sort-alpha-asc mr-1"></i>名称
+                            </button>
+                            <button onclick="sortTosFiles('time')" id="sortTimeBtn"
+                                    class="px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">
+                                <i class="fa fa-clock-o mr-1"></i>时间
+                            </button>
+                        </div>
+                        <span class="text-sm text-gray-500">共 <span id="zipTotal">0</span> 条记录</span>
+                    </div>
                 </div>
                 <div id="zipList" class="space-y-3 max-h-96 overflow-y-auto">
                     <div class="text-center text-gray-400 py-8">
@@ -398,6 +415,7 @@
         }
 
         async function loadZips(page = 1) {
+            showTosFiles = false; // 标记为显示本地ZIP列表
             try {
                 console.log(`[DEBUG] 加载ZIP列表: ${API_BASE}/zips?page=${page}&page_size=10`);
                 const response = await fetch(`${API_BASE}/zips?page=${page}&page_size=10`);
@@ -458,7 +476,7 @@
                             <i class="fa fa-file-archive-o text-purple-500 mr-3"></i>
                             <div>
                                 <p class="font-medium text-gray-700">${zip.filename}</p>
-                                <p class="text-sm text-gray-400">7天内有效 | 创建于 ${zip.create_time}</p>
+                                <p class="text-sm text-gray-400">24小时内有效 | 创建于 ${zip.create_time}</p>
                             </div>
                         </div>
                         <div class="flex items-center">
@@ -474,6 +492,145 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        async function loadTosFiles() {
+            showTosFiles = true; // 标记为显示TOS文件列表
+            try {
+                console.log(`[DEBUG] 加载TOS文件列表: ${API_BASE}/tos-files?prefix=zip_files/`);
+                const response = await fetch(`${API_BASE}/tos-files?prefix=zip_files/`);
+                console.log(`[DEBUG] loadTosFiles 响应状态: ${response.status}`);
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error(`[ERROR] loadTosFiles HTTP错误: ${response.status} - ${text}`);
+                    alert('加载TOS文件列表失败');
+                    return;
+                }
+                
+                const result = await response.json();
+                console.log(`[DEBUG] loadTosFiles 响应:`, result);
+                renderTosFiles(result.files, result.total);
+            } catch (error) {
+                console.error('[ERROR] 加载TOS文件列表失败:', error);
+                alert('加载TOS文件列表失败: ' + error.message);
+            }
+        }
+
+        function renderTosFiles(files, total) {
+            const zipList = document.getElementById('zipList');
+            const zipTotal = document.getElementById('zipTotal');
+            const zipPagination = document.getElementById('zipPagination');
+            
+            zipTotal.textContent = total;
+            zipPagination.classList.add('hidden'); // TOS文件列表不分页
+            
+            if (files.length === 0) {
+                zipList.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                        <i class="fa fa-cloud text-4xl mb-2"></i>
+                        <p>TOS存储桶中暂无文件</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 保存文件数据用于排序
+            tosFilesData = files;
+            
+            zipList.innerHTML = files.map(file => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-800">${file.filename}</div>
+                        <div class="text-sm text-gray-500">
+                            大小: ${file.size_kb} KB | 修改时间: ${file.last_modified}
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <a href="${file.download_url}" target="_blank" 
+                           class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
+                            <i class="fa fa-download mr-1"></i>下载
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        let tosFilesData = []; // 存储TOS文件数据用于排序
+        let sortConfig = {
+            by: '',
+            order: 'asc'
+        };
+
+        function sortTosFiles(by) {
+            if (tosFilesData.length === 0) {
+                alert('请先查询TOS文件');
+                return;
+            }
+
+            // 切换排序方向
+            if (sortConfig.by === by) {
+                sortConfig.order = sortConfig.order === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortConfig.by = by;
+                sortConfig.order = 'desc'; // 默认降序（最新的在前）
+            }
+
+            // 执行排序
+            let sortedFiles = [...tosFilesData];
+            
+            if (by === 'name') {
+                sortedFiles.sort((a, b) => {
+                    const nameA = a.filename.toLowerCase();
+                    const nameB = b.filename.toLowerCase();
+                    return sortConfig.order === 'asc' 
+                        ? nameA.localeCompare(nameB) 
+                        : nameB.localeCompare(nameA);
+                });
+            } else if (by === 'time') {
+                sortedFiles.sort((a, b) => {
+                    const timeA = new Date(a.last_modified);
+                    const timeB = new Date(b.last_modified);
+                    return sortConfig.order === 'asc' 
+                        ? timeA.getTime() - timeB.getTime() 
+                        : timeB.getTime() - timeA.getTime();
+                });
+            }
+
+            // 更新按钮状态
+            updateSortButtons();
+            
+            // 重新渲染
+            renderTosFiles(sortedFiles, sortedFiles.length);
+        }
+
+        function updateSortButtons() {
+            const nameBtn = document.getElementById('sortNameBtn');
+            const timeBtn = document.getElementById('sortTimeBtn');
+
+            // 重置所有按钮样式
+            nameBtn.innerHTML = '<i class="fa fa-sort-alpha-asc mr-1"></i>名称';
+            nameBtn.classList.remove('bg-blue-500', 'text-white');
+            nameBtn.classList.add('bg-gray-100', 'text-gray-600');
+            
+            timeBtn.innerHTML = '<i class="fa fa-clock-o mr-1"></i>时间';
+            timeBtn.classList.remove('bg-blue-500', 'text-white');
+            timeBtn.classList.add('bg-gray-100', 'text-gray-600');
+
+            // 设置当前排序按钮样式
+            if (sortConfig.by === 'name') {
+                nameBtn.innerHTML = sortConfig.order === 'asc' 
+                    ? '<i class="fa fa-sort-alpha-asc mr-1"></i>名称↑' 
+                    : '<i class="fa fa-sort-alpha-desc mr-1"></i>名称↓';
+                nameBtn.classList.remove('bg-gray-100', 'text-gray-600');
+                nameBtn.classList.add('bg-blue-500', 'text-white');
+            } else if (sortConfig.by === 'time') {
+                timeBtn.innerHTML = sortConfig.order === 'asc' 
+                    ? '<i class="fa fa-clock-o mr-1"></i>时间↑' 
+                    : '<i class="fa fa-clock-o mr-1"></i>时间↓';
+                timeBtn.classList.remove('bg-gray-100', 'text-gray-600');
+                timeBtn.classList.add('bg-blue-500', 'text-white');
+            }
         }
 
         function initPagination() {
@@ -614,10 +771,15 @@
             }
         }
 
+        let showTosFiles = false; // 标记是否显示TOS文件列表
+
         function startAutoRefresh() {
             refreshInterval = setInterval(() => {
                 loadTasks(taskPage);
-                loadZips(zipPage);
+                // 如果当前显示的是TOS文件列表，则不刷新ZIP列表
+                if (!showTosFiles) {
+                    loadZips(zipPage);
+                }
             }, 3000);
         }
 
